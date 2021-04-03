@@ -92,6 +92,20 @@
         </dependency>
 
         <dependency>
+            <groupId>io.delta</groupId>
+            <artifactId>delta-hive_2.12</artifactId>
+            <scope>provided</scope>
+            <version>0.2.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <scope>provided</scope>
+            <version>2.12.12</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.facebook.presto</groupId>
             <artifactId>presto-memory-context</artifactId>
         </dependency>
@@ -427,6 +441,9 @@
                     <ignoredDependencies>
                         <ignoredDependency>org.glassfish.jersey.core:jersey-common:jar</ignoredDependency>
                         <ignoredDependency>org.eclipse.jetty:jetty-server:jar</ignoredDependency>
+<!--                        <ignoredDependency>com.fasterxml.jackson.core:jackson-annotations:jar</ignoredDependency>-->
+<!--                        <ignoredDependency>com.fasterxml.jackson.core:jackson-databind:jar</ignoredDependency>-->
+<!--                        <ignoredDependency>com.fasterxml.jackson.core:jackson-core:jar:2.9.8</ignoredDependency>-->
                     </ignoredDependencies>
                 </configuration>
             </plugin>

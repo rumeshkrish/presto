@@ -92,6 +92,7 @@ import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.Maps.fromProperties;
 import static com.google.common.collect.Streams.stream;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static java.lang.Math.max;
@@ -289,6 +290,7 @@ public class BackgroundHiveSplitLoader
     {
         String partitionName = partition.getHivePartition().getPartitionId();
         Storage storage = partition.getPartition().map(Partition::getStorage).orElse(table.getStorage());
+        Properties schema = partition.getPartition().map(value -> getHiveSchema(value, table)).orElseGet(() -> getHiveSchema(table));
         String inputFormatName = storage.getStorageFormat().getInputFormat();
         int partitionDataColumnCount = partition.getPartition()
                 .map(p -> p.getColumns().size())
@@ -378,6 +380,8 @@ public class BackgroundHiveSplitLoader
             }
             JobConf jobConf = toJobConf(configuration);
             FileInputFormat.setInputPaths(jobConf, path);
+            // SerDes parameters and Table parameters passing into input format
+            fromProperties(schema).forEach(jobConf::set);
             InputSplit[] splits = inputFormat.getSplits(jobConf, 0);
 
             return addSplitsToSource(splits, splitFactory);
@@ -385,7 +389,6 @@ public class BackgroundHiveSplitLoader
         PathFilter pathFilter = isHudiParquetInputFormat(inputFormat) ? hoodiePathFilterSupplier.get() : path1 -> true;
         // S3 Select pushdown works at the granularity of individual S3 objects,
         // therefore we must not split files when it is enabled.
-        Properties schema = getHiveSchema(storage.getSerdeParameters(), table.getParameters());
         // Skip header / footer lines are not splittable except for a special case when skip.header.line.count=1
         boolean splittable = !s3SelectPushdownEnabled && getFooterCount(schema) == 0 && getHeaderCount(schema) <= 1;
 
