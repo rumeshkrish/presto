@@ -31,6 +31,7 @@ import com.facebook.presto.hive.metastore.Column;
 import com.facebook.presto.hive.metastore.Storage;
 import com.facebook.presto.hive.metastore.Table;
 import com.facebook.presto.hive.pagefile.PageInputFormat;
+import com.facebook.presto.hive.util.DeltaLakeFileSplitConverter;
 import com.facebook.presto.hive.util.FooterAwareRecordReader;
 import com.facebook.presto.hive.util.HudiRealtimeSplitConverter;
 import com.facebook.presto.orc.OrcReader;
@@ -50,6 +51,7 @@ import io.airlift.compress.lzo.LzopCodec;
 import io.airlift.slice.Slice;
 import io.airlift.slice.SliceUtf8;
 import io.airlift.slice.Slices;
+import io.delta.hive.DeltaInputSplit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -225,7 +227,8 @@ public final class HiveUtil
         InputFormat<?, ?> inputFormat = getInputFormat(configuration, getInputFormatName(schema), true);
         JobConf jobConf = toJobConf(configuration);
         FileSplit fileSplit = new FileSplit(path, start, length, (String[]) null);
-        if (!customSplitInfo.isEmpty() && isHudiRealtimeSplit(customSplitInfo)) {
+        if (!customSplitInfo.isEmpty() &&
+                (isHudiRealtimeSplit(customSplitInfo)) || isDeltaLakeSplit(customSplitInfo)) {
             fileSplit = recreateSplitWithCustomInfo(fileSplit, customSplitInfo);
 
             // Add additional column information for record reader
@@ -285,6 +288,12 @@ public final class HiveUtil
     {
         String customSplitClass = customSplitInfo.get(HudiRealtimeSplitConverter.CUSTOM_SPLIT_CLASS_KEY);
         return HoodieRealtimeFileSplit.class.getName().equals(customSplitClass);
+    }
+
+    private static boolean isDeltaLakeSplit(Map<String, String> customSplitInfo)
+    {
+        String customSplitClass = customSplitInfo.get(DeltaLakeFileSplitConverter.CUSTOM_SPLIT_CLASS_KEY);
+        return DeltaInputSplit.class.getName().equals(customSplitClass);
     }
 
     public static void setReadColumns(Configuration configuration, List<Integer> readHiveColumnIndexes)
